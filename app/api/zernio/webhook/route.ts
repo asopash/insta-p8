@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { getSupabaseServerClient } from "@/lib/supabase-server"
 
 const ZERNIO_API_URL = "https://zernio.com/api/v1"
 
@@ -7,45 +8,27 @@ async function sendZernioMessage(
   accountId: string,
   text: string
 ) {
-  try {
-    const response = await fetch(
-      `${ZERNIO_API_URL}/inbox/conversations/${conversationId}/messages`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${process.env.ZERNIO_API_KEY}`,
-        },
-        body: JSON.stringify({
-          accountId,
-          message: text,
-        }),
-      }
-    )
+  const response = await fetch(
+    `${ZERNIO_API_URL}/inbox/conversations/${conversationId}/messages`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.ZERNIO_API_KEY}`,
+      },
+      body: JSON.stringify({
+        accountId,
+        message: text,
+      }),
+    }
+  )
 
-    const data = await response.json()
+  const data = await response.json()
 
-    console.log(
-      "ZERNIO SEND STATUS:",
-      response.status
-    )
+  console.log("SEND STATUS:", response.status)
+  console.log("SEND RESPONSE:", data)
 
-    console.log(
-      "ZERNIO SEND RESPONSE:",
-      JSON.stringify(data, null, 2)
-    )
-
-    return data
-
-  } catch (error) {
-
-    console.error(
-      "ZERNIO SEND ERROR:",
-      error
-    )
-
-    return null
-  }
+  return data
 }
 
 
@@ -54,28 +37,20 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
 
-
-    console.log(
-      "========== ZERNIO WEBHOOK =========="
-    )
-
-    console.log(
-      JSON.stringify(body, null, 2)
-    )
+    console.log("========== ZERNIO WEBHOOK ==========")
+    console.log(JSON.stringify(body, null, 2))
 
 
     if (body?.event !== "message.received") {
-
       return NextResponse.json({
         success: true,
         ignored: true,
       })
-
     }
 
 
     const text =
-      body?.message?.text?.trim() || ""
+      body?.message?.text?.trim()?.toLowerCase() || ""
 
 
     const conversationId =
@@ -86,68 +61,117 @@ export async function POST(request: NextRequest) {
       body?.account?.id
 
 
-    console.log(
-      "TEXT:",
-      text
-    )
-
-    console.log(
-      "CONVERSATION ID:",
-      conversationId
-    )
-
-    console.log(
-      "ACCOUNT ID:",
-      accountId
-    )
+    const username =
+      body?.account?.username
 
 
-    if (!conversationId || !accountId) {
-
+    if (!text || !conversationId || !accountId) {
       return NextResponse.json({
         success: false,
-        error: "Missing conversationId or accountId",
+        error: "Missing data",
       })
-
     }
 
 
-    if (text) {
+    const supabase = await getSupabaseServerClient()
+
+
+    // پیدا کردن صاحب اکانت
+    const { data: user } = await supabase
+      .from("users")
+      .select("id")
+      .eq("username", username)
+      .single()
+
+
+    if (!user) {
 
       await sendZernioMessage(
         conversationId,
         accountId,
-        `پیام شما دریافت شد: ${text}`
+        "اکانت پیدا نشد"
       )
 
+      return NextResponse.json({
+        success:false
+      })
     }
 
 
-    return NextResponse.json({
-      success: true,
-      text,
+    // پیدا کردن قانون فعال
+    const { data: automation } = await supabase
+      .from("automations")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("trigger_source", "dm")
+      .eq("is_active", true)
+      .ilike("trigger_value", text)
+      .maybeSingle()
+
+
+
+    if (!automation) {
+
+      console.log(
+        "NO AUTOMATION FOR:",
+        text
+      )
+
+      return NextResponse.json({
+        success:true,
+        matched:false
+      })
+    }
+
+
+
+    let reply = ""
+
+
+    if (typeof automation.response_content === "string") {
+      reply = automation.response_content
+    } 
+    else if (automation.response_content?.message) {
+      reply = automation.response_content.message
+    }
+    else {
+      reply = JSON.stringify(
+        automation.response_content
+      )
+    }
+
+
+
+    await sendZernioMessage(
       conversationId,
       accountId,
+      reply
+    )
+
+
+    return NextResponse.json({
+      success:true,
+      matched:true,
+      trigger:text,
+      reply
     })
 
 
-  } catch (error: any) {
+  } catch(error:any){
 
     console.error(
-      "ZERNIO WEBHOOK ERROR:",
+      "ZERNIO WEBHOOK ERROR",
       error
     )
 
-
     return NextResponse.json(
       {
-        success: false,
-        error: error.message,
+        success:false,
+        error:error.message
       },
       {
-        status: 500,
+        status:500
       }
     )
-
   }
 }
