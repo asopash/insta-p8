@@ -4,6 +4,7 @@ const ZERNIO_API_URL = "https://zernio.com/api/v1"
 
 async function sendZernioMessage(
   conversationId: string,
+  accountId: string,
   text: string
 ) {
   try {
@@ -16,6 +17,7 @@ async function sendZernioMessage(
           "Authorization": `Bearer ${process.env.ZERNIO_API_KEY}`,
         },
         body: JSON.stringify({
+          accountId,
           message: text,
         }),
       }
@@ -36,6 +38,7 @@ async function sendZernioMessage(
     return data
 
   } catch (error) {
+
     console.error(
       "ZERNIO SEND ERROR:",
       error
@@ -51,6 +54,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
 
+
     console.log(
       "========== ZERNIO WEBHOOK =========="
     )
@@ -61,31 +65,50 @@ export async function POST(request: NextRequest) {
 
 
     if (body?.event !== "message.received") {
+
       return NextResponse.json({
         success: true,
         ignored: true,
       })
+
     }
 
 
-    const text = body?.message?.text?.trim()
+    const text =
+      body?.message?.text?.trim() || ""
+
 
     const conversationId =
-      body?.conversation?.id
+      body?.conversation?.platformConversationId
 
 
-    console.log("TEXT:", text)
+    const accountId =
+      body?.account?.id
+
+
+    console.log(
+      "TEXT:",
+      text
+    )
+
     console.log(
       "CONVERSATION ID:",
       conversationId
     )
 
+    console.log(
+      "ACCOUNT ID:",
+      accountId
+    )
 
-    if (!conversationId) {
+
+    if (!conversationId || !accountId) {
+
       return NextResponse.json({
         success: false,
-        error: "conversation id missing",
+        error: "Missing conversationId or accountId",
       })
+
     }
 
 
@@ -93,6 +116,7 @@ export async function POST(request: NextRequest) {
 
       await sendZernioMessage(
         conversationId,
+        accountId,
         `پیام شما دریافت شد: ${text}`
       )
 
@@ -101,16 +125,19 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      received: text,
+      text,
+      conversationId,
+      accountId,
     })
 
 
   } catch (error: any) {
 
     console.error(
-      "WEBHOOK ERROR:",
+      "ZERNIO WEBHOOK ERROR:",
       error
     )
+
 
     return NextResponse.json(
       {
@@ -121,5 +148,6 @@ export async function POST(request: NextRequest) {
         status: 500,
       }
     )
+
   }
 }
