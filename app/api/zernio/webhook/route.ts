@@ -4,83 +4,48 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
 
-    console.log(
-      "================ ZERNIO EVENT ================"
-    )
+    console.log("ZER NIO EVENT:", JSON.stringify(body, null, 2))
 
-    console.log(JSON.stringify(body, null, 2))
+    if (body?.event === "message.received") {
+      const text = body?.message?.text
+      const conversationId = body?.conversation?.id
 
-    const event = body?.event
-
-    if (!event) {
-      return NextResponse.json({
-        success: false,
-        message: "No event found",
-      })
-    }
-
-    // فقط پیام دایرکت اینستاگرام
-    if (event === "message.received") {
-      const message = body.message
-
-      const text = message?.text || ""
-
-      const sender = message?.sender || {}
-
-      const account = body?.account || {}
-
-      console.log("EVENT:", event)
-      console.log("ACCOUNT:", account.username)
-      console.log("SENDER:", sender.username)
       console.log("TEXT:", text)
+      console.log("CONVERSATION:", conversationId)
 
-      /*
-        اینجا مرحله بعد اضافه می‌کنیم:
+      if (text === "999") {
 
-        1- اگر text = 22 بود
-        2- از Supabase محصول شماره 22 را پیدا کنیم
-        3- جواب را از طریق Zernio ارسال کنیم
-      */
+        const response = await fetch(
+          `https://zernio.com/api/v1/inbox/conversations/${conversationId}/messages`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${process.env.ZERNIO_API_KEY}`,
+            },
+            body: JSON.stringify({
+              text: " ✅🔴محصول تستی شماره 999 آماده است",
+            }),
+          }
+        )
 
-      return NextResponse.json({
-        success: true,
-        type: "message.received",
-        text,
-        sender: sender.username,
-        account: account.username,
-      })
+        const result = await response.json()
+
+        console.log("ZERNIO SEND RESULT:", result)
+      }
     }
-
-
-    // فعلاً کامنت برای مرحله بعد
-    if (event === "comment.received") {
-      console.log("COMMENT EVENT RECEIVED")
-
-      return NextResponse.json({
-        success: true,
-        type: "comment.received",
-      })
-    }
-
 
     return NextResponse.json({
       success: true,
-      message: "Event ignored",
-      event,
     })
-
 
   } catch (error: any) {
 
-    console.error(
-      "ZERNIO WEBHOOK ERROR:",
-      error?.message
-    )
+    console.error("WEBHOOK ERROR:", error)
 
     return NextResponse.json(
       {
-        success: false,
-        error: error?.message,
+        error: error.message,
       },
       {
         status: 500,
