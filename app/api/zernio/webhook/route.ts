@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
               "Authorization": `Bearer ${process.env.ZERNIO_API_KEY}`,
             },
             body: JSON.stringify({
-              text: " ✅🔴محصول تستی شماره 999 آماده است",
+              message: " ✅🔴محصول تستی شماره 999 آماده است",
             }),
           }
         )
