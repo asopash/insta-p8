@@ -16,6 +16,6 @@ export async function GET(req: NextRequest) {
 
 
   return NextResponse.redirect(
-    new URL("/dashboard", req.url)
-  )
+  "https://insta-p8.up.railway.app/dashboard"
+)
 }
