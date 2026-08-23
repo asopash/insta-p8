@@ -109,6 +109,8 @@ export async function GET(request: NextRequest) {
     }
   )
 
+console.log("USER SAVE:", data, error)    
+
 if (error) {
   console.error("USER UPSERT ERROR:", error)
   throw error
