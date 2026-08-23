@@ -14,6 +14,8 @@ export async function GET(req: NextRequest) {
     username
   })
 
+console.log("AUTH URL:", data.authUrl)
+  
   return NextResponse.redirect(
     new URL("/dashboard", req.url)
   )
