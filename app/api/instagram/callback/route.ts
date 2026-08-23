@@ -87,7 +87,7 @@ export async function GET(request: NextRequest) {
     const username =
       profile.username || `user_${instagramUserId}`
 
-
+console.log("CALLBACK REACHED BEFORE SUPABASE")
     const supabase = await getSupabaseServerClient()
 
 
