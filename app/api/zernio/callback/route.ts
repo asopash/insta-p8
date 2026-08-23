@@ -33,8 +33,8 @@ export async function GET(req: NextRequest) {
 
 
   const response = NextResponse.redirect(
-    new URL("/dashboard", req.url)
-  )
+  "https://insta-p8.up.railway.app/dashboard"
+)
 
 
   // ذخیره اتصال کاربر
