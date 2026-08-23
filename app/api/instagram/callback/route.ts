@@ -91,26 +91,30 @@ export async function GET(request: NextRequest) {
     const supabase = await getSupabaseServerClient()
 
 
-    await supabase
-      .from("users")
-      .upsert(
-        {
-          id: instagramUserId,
-          username,
-          access_token: accessToken,
-          business_account_id: instagramUserId,
-          page_id: instagramUserId,
-          token_expires_at:
-            new Date(
-              Date.now() + 60 * 24 * 60 * 60 * 1000
-            ).toISOString(),
-          updated_at:
-            new Date().toISOString(),
-        },
-        {
-          onConflict: "id",
-        }
-      )
+    const { data, error } = await supabase
+  .from("users")
+  .upsert(
+    {
+      id: Number(instagramUserId),
+      username,
+      access_token: accessToken,
+      business_account_id: Number(instagramUserId),
+      page_id: instagramUserId,
+      token_expires_at:
+        new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    {
+      onConflict: "id",
+    }
+  )
+
+if (error) {
+  console.error("USER UPSERT ERROR:", error)
+  throw error
+}
+
+console.log("USER SAVED:", data)
 
 
     const response = NextResponse.redirect(
