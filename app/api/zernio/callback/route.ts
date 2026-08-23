@@ -2,19 +2,20 @@ import { NextRequest, NextResponse } from "next/server"
 
 export async function GET(req: NextRequest) {
 
-  const params = req.nextUrl.searchParams
+  const connected = req.nextUrl.searchParams.get("connected")
+  const profileId = req.nextUrl.searchParams.get("profileId")
+  const accountId = req.nextUrl.searchParams.get("accountId")
+  const username = req.nextUrl.searchParams.get("username")
 
   console.log("ZERNIO CALLBACK", {
-    connected: params.get("connected"),
-    profileId: params.get("profileId"),
-    accountId: params.get("accountId"),
-    username: params.get("username"),
+    connected,
+    profileId,
+    accountId,
+    username
   })
 
 
-  const response = NextResponse.redirect(
+  return NextResponse.redirect(
     new URL("/dashboard", req.url)
   )
-
-  return response
 }
