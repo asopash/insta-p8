@@ -23,7 +23,7 @@ export function LandingPage() {
   }, [])
 
   const handleLogin = () => {
-  window.location.href = "https://insta-p8.up.railway.app/api/zernio/connect"
+  window.location.href = "/api/zernio/connect"
 }
 
   const handleTestLogin = () => {
