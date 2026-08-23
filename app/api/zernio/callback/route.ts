@@ -17,7 +17,20 @@ export async function GET(req: NextRequest) {
     username
   })
 
+const supabase = await getSupabaseServerClient()
 
+const { error } = await supabase
+  .from("users")
+  .upsert({
+    id: accountId,
+    username: username || "unknown",
+    business_account_id: accountId,
+    page_id: profileId,
+    updated_at: new Date().toISOString(),
+  })
+
+console.log("SUPABASE SAVE RESULT", error)
+  
   if (!profileId || !accountId) {
     return NextResponse.json(
       {
