@@ -11,7 +11,7 @@ export async function GET() {
     const url =
   `https://zernio.com/api/v1/connect/instagram` +
   `?profileId=${profileId}` +
-  `&redirect_uri=${encodeURIComponent(redirectUrl)}`
+  `&redirect_url=${encodeURIComponent(redirectUrl)}`
 
     
     const res = await fetch(url, {
