@@ -9,10 +9,11 @@ export async function GET() {
       "https://insta-p8.up.railway.app/api/zernio/callback"
 
     const url =
-      `https://zernio.com/api/v1/connect/instagram` +
-      `?profileId=${profileId}` +
-      `&redirect_url=${encodeURIComponent(redirectUrl)}`
+  `https://zernio.com/api/v1/connect/instagram` +
+  `?profileId=${profileId}` +
+  `&redirect_uri=${encodeURIComponent(redirectUrl)}`
 
+    
     const res = await fetch(url, {
       headers: {
         Authorization: `Bearer ${apiKey}`,
