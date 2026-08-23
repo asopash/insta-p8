@@ -3,10 +3,9 @@ import { NextResponse } from "next/server"
 export async function GET() {
   try {
     const response = await fetch(
-      `https://zernio.com/api/v1/connect/instagram?profileId=${process.env.ZERNIO_PROFILE_ID}&redirect_url=${encodeURIComponent(
-        "https://insta-p8.up.railway.app/api/zernio/callback"
-      )}`,
+      `https://zernio.com/api/v1/connect/instagram?profileId=${process.env.ZERNIO_PROFILE_ID}`,
       {
+        method: "GET",
         headers: {
           Authorization: `Bearer ${process.env.ZERNIO_API_KEY}`,
         },
@@ -15,18 +14,23 @@ export async function GET() {
 
     const data = await response.json()
 
-    console.log("ZERNIO CONNECT:", data)
-
-    if (!data.authUrl) {
-      return NextResponse.json(data, { status: 400 })
+    if (!response.ok) {
+      return NextResponse.json(data, {
+        status: response.status,
+      })
     }
 
     return NextResponse.redirect(data.authUrl)
 
   } catch (error:any) {
+
     return NextResponse.json(
-      { error: error.message },
-      { status: 500 }
+      {
+        error:error.message
+      },
+      {
+        status:500
+      }
     )
   }
 }
