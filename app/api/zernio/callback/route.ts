@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-
+import { getSupabaseServerClient } from "@/lib/supabase-server"
 export async function GET(req: NextRequest) {
 
   const params = req.nextUrl.searchParams
@@ -31,7 +31,28 @@ export async function GET(req: NextRequest) {
     )
   }
 
+const supabase = await getSupabaseServerClient()
 
+const { data, error } = await supabase
+  .from("users")
+  .upsert(
+    {
+      id: accountId,
+      username: username || `user_${accountId}`,
+      business_account_id: accountId,
+      page_id: profileId,
+      updated_at: new Date().toISOString(),
+    },
+    {
+      onConflict: "id",
+    }
+  )
+
+console.log("ZERNIO USER SAVE", {
+  data,
+  error
+})
+  
   const response = NextResponse.redirect(
   "https://insta-p8.up.railway.app/dashboard"
 )
