@@ -42,15 +42,24 @@ export function useInstagramSession() {
             }
             // CASE B: Restore Session from LocalStorage
             else {
-                const savedId = localStorage.getItem("ig_user_id")
-                const savedName = localStorage.getItem("ig_username")
+    const savedId = localStorage.getItem("ig_user_id")
+    const savedName = localStorage.getItem("ig_username")
 
-                if (savedId && savedName) {
-                    setUserId(savedId)
-                    setUsername(savedName)
-                    setProfilePic(localStorage.getItem("ig_profile_pic"))
-                }
-            }
+    if (savedId && savedName) {
+        setUserId(savedId)
+        setUsername(savedName)
+        setProfilePic(localStorage.getItem("ig_profile_pic"))
+    } else {
+        // Zernio session fallback
+        const zernioRes = await fetch("/api/zernio/session")
+        const zernioData = await zernioRes.json()
+
+        if (zernioData?.accountId) {
+            setUserId(zernioData.accountId)
+            setUsername(zernioData.username)
+        }
+    }
+}
             setIsLoading(false)
         }
 
